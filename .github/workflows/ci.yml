@@ -282,3 +282,11 @@ jobs:
 
         # Push tag
         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$VERSION
+
+  sync-to-azure-devops:
+    uses: ./.github/workflows/repo-sync.yml
+    # Wait for all 4 jobs to complete (success, failure, or skipped)
+    needs: [check-test-needed, build-and-test, version-bump, build-and-push-container]
+    # Always run, no matter what happened to the previous jobs
+    if: always()
+    secrets: inherit
