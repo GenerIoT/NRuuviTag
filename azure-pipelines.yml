@@ -3,6 +3,9 @@ trigger:
     include:
       - "*"   # Trigger on any branch change
 
+variables:
+- group: Sync-pipeline
+
 pool:
   vmImage: 'ubuntu-latest'
 
