@@ -16,7 +16,7 @@ steps:
     git config --global user.email "hai.m.chu20@gmail.com"
   
     # Add GitHub remote
-    GITHUB_URL="https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git"
+    GITHUB_URL="https://$(GITHUB_TOKEN)@github.com/$(GITHUB_REPO).git"
     git remote add github $GITHUB_URL
 
     # Fetch all branches and tags from Azure DevOps
