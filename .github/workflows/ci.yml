@@ -263,6 +263,7 @@ jobs:
   deploy-to-iot-hub:
     runs-on: ubuntu-latest
     needs: [version-bump, build-and-push-container]
+    if: always()
     env: 
         IOTHUB_NAME: ${{ vars.IOTHUB_NAME }}
         DEPLOYMENT_ID: ${{ vars.DEPLOYMENT_ID }}
@@ -270,7 +271,8 @@ jobs:
         DEVICE_CONNECTION_STRING: ${{ secrets.DEVICE_CONNECTION_STRING }}
         LOGIN_SERVER: ${{ vars.LOGIN_SERVER }}
         TARGET_CONDITION: ${{ vars.TARGET_CONDITION }}
-        
+
+    
     steps:
     - name: Azure Login
       uses: azure/login@v2
@@ -284,7 +286,7 @@ jobs:
         
     - name: 📝 Create deployment manifest
       run: |
-        VERSION="${{ needs.version-bump.outputs.version }}"
+        VERSION= "${{ needs.version-bump.outputs.version || 'latest' }}"
         cat <<EOF > deployment.json
         {
           "content": {
@@ -319,7 +321,7 @@ jobs:
         
     - name: Create IoT Edge deployment
       run: |
-        VERSION="${{ needs.version-bump.outputs.version }}"
+        VERSION="${{ needs.version-bump.outputs.version || 'latest' }}"
         TIMESTAMP=$(date -u +"%Y-%m-%d-%H-%M-%S")
         PRIORITY=$(date -u +"%Y%m%d%H%M%S")
         
