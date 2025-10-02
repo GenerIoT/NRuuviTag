@@ -64,7 +64,7 @@ stages:
     jobs:
       - template: templates/build-push-container.yml
   
-  - stage: iot-hub-deployment 
+  - stage: iot_hub_deployment 
     displayName: "IoT Hub Deployment"
     dependsOn: [Container, VersionBump]
     condition: and(succeeded('VersionBump'), succeeded('ContainerBuild'))
@@ -75,7 +75,7 @@ stages:
 
   - stage: SyncRepo
     displayName: "Sync to GitHub"
-    dependsOn: iot-hub-deployment
+    dependsOn: iot_hub_deployment
     condition: always()
     jobs: 
       - template: templates/repo-sync.yml
