@@ -74,4 +74,19 @@ stages:
       VERSION: $[ stageDependencies.VersionBump.version_bump.outputs['SetVersion.version'] ]
     jobs:
       - template: templates/build-push-container.yml
+  
+  - stage: iot-hub-deployment 
+    displayName: "IoT Hub Deployment"
+    dependsOn: Container
+    condition: and(succeeded('VersionBump'), succeeded('ContainerBuild'))
+    jobs: 
+      - template: templates/iot-hub-deployment.yml
+
+  - stage: SyncRepo
+    displayName: "Sync to GitHub"
+    dependsOn: iot-hub-deployment
+    condition: always()
+    jobs: 
+      - template: templates/repo-sync.yml
+
 
