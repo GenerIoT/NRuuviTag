@@ -40,17 +40,6 @@ variables:
   - name: BUILD_CONFIGURATION
     value: Release
 
-  - name: REGISTRY
-    value: $(CONTAINER_REGISTRY)
-  - name: USERNAME
-    value: $(AZ_NRUUVITAG_USERNAME)
-  - name: PASSWORD
-    value: $(AZ_NRUUVITAG_PASS)
-  - name: IMAGE_NAME
-    value: $(CONTAINER_IMAGE_NAME)
-  - name: AZURE_DEVOPS_PAT
-    value: $(AZ_DEVOPS_PAT)
-
 stages:
   - stage: BuildAndTest
     displayName: "Build and Test"
