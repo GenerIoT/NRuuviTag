@@ -51,14 +51,14 @@ stages:
   - stage: VersionBump
     displayName: "Version Bump"
     dependsOn: BuildAndTest
-    condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/$(TARGET_BRANCH)'), eq(variables['Build.Reason'], 'IndividualCI'))
+    condition: and(eq(variables['Build.SourceBranch'], format('refs/heads/{0}', variables['TARGET_BRANCH'])), eq(variables['Build.Reason'], 'IndividualCI'))
     jobs:
       - template: templates/version-bump.yml
 
   - stage: Container
     displayName: "Build and Push Container"
     dependsOn: VersionBump
-    condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/$(TARGET_BRANCH)'), eq(variables['Build.Reason'], 'IndividualCI'))
+    condition: and(eq(variables['Build.SourceBranch'], format('refs/heads/{0}', variables['TARGET_BRANCH'])), eq(variables['Build.Reason'], 'IndividualCI'))
     variables:
       VERSION: $[ stageDependencies.VersionBump.version_bump.outputs['SetVersion.version'] ]
     jobs:
