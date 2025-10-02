@@ -56,7 +56,7 @@ jobs:
           key: 'cake-tools | "$(Agent.OS)" | build.cake'
           restoreKeys: |
             cake-tools | "$(Agent.OS)"
-          path: /home/vsts/work/1/s/~/tools
+          path: ./tools
 
       - script: chmod +x build.sh
 
@@ -65,12 +65,3 @@ jobs:
 
       - script: ./build.sh --target=Test --configuration="$BUILD_CONFIGURATION"
         displayName: "Run Tests"
-
-      - script: |
-          echo "=== Debug Info ==="
-          echo "Current working directory: $(pwd)"
-          echo ""
-          ls -la
-
-          echo "=== End Debug Info ==="
-        displayName: "Debug cached folders"
