@@ -57,7 +57,7 @@
 
         # 4️⃣ Deploy to IoT Hub
         - script: |
-            VERSION=$(dependencies.version_bump.outputs['setVersion.version'] || echo "latest")
+            VERSION=$(VERSION)
             TIMESTAMP=$(date -u +"%Y-%m-%d-%H-%M-%S")
             PRIORITY=$(date -u +"%Y%m%d%H%M%S")
 
