@@ -5,6 +5,13 @@ jobs:
       steps:
         - checkout: self
           submodules: true
+          persistCredentials: true
+
+        - script: |
+            git fetch origin main
+            git reset --hard origin/main
+            echo "Updated to latest commit with version bump"
+          displayName: 'Update to latest commit'
 
         - task: Cache@2
           inputs:
@@ -34,7 +41,7 @@ jobs:
           displayName: "Build and Publish Container"
 
         - script: |
-            VERSION=$(dependencies.version_bump.outputs['version_bump.version'])
+            VERSION=$(VERSION)
             docker tag $(IMAGE_NAME):$VERSION $(REGISTRY)/$(IMAGE_NAME):$VERSION
             docker push $(REGISTRY)/$(IMAGE_NAME):$VERSION
           displayName: "Tag and Push Container"
