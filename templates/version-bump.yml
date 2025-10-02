@@ -1,42 +1,42 @@
 jobs: 
     - job: version_bump
-    dependsOn: build_and_test
-    condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'IndividualCI'))
+      dependsOn: build_and_test
+      condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'IndividualCI'))
 
-    steps:
+      steps:
         - checkout: self
-        fetchDepth: 0
-        submodules: true
-        persistCredentials: true
+          fetchDepth: 0
+          submodules: true
+          persistCredentials: true
 
         - bash: |
-            MAJOR=$(jq -r '.Major' build/version.json)
-            MINOR=$(jq -r '.Minor' build/version.json)
-            PATCH=$(jq -r '.Patch' build/version.json)
+                MAJOR=$(jq -r '.Major' build/version.json)
+                MINOR=$(jq -r '.Minor' build/version.json)
+                PATCH=$(jq -r '.Patch' build/version.json)
 
-            if [ $PATCH -eq 99 ]; then
-            MINOR=$((MINOR + 1))
-            PATCH=0
-            jq --arg new_minor "$MINOR" --arg new_patch "0" '.Minor = ($new_minor | tonumber) | .Patch = 0' build/version.json > build/version.tmp.json
-            else
-            PATCH=$((PATCH + 1))
-            jq --arg new_patch "$PATCH" '.Patch = ($new_patch | tonumber)' build/version.json > build/version.tmp.json
-            fi
+                if [ $PATCH -eq 99 ]; then
+                MINOR=$((MINOR + 1))
+                PATCH=0
+                jq --arg new_minor "$MINOR" --arg new_patch "0" '.Minor = ($new_minor | tonumber) | .Patch = 0' build/version.json > build/version.tmp.json
+                else
+                PATCH=$((PATCH + 1))
+                jq --arg new_patch "$PATCH" '.Patch = ($new_patch | tonumber)' build/version.json > build/version.tmp.json
+                fi
 
-            NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-            echo "##vso[task.setvariable variable=version;isOutput=true]$NEW_VERSION"
+                NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+                echo "##vso[task.setvariable variable=version;isOutput=true]$NEW_VERSION"
 
-            mv build/version.tmp.json build/version.json
+                mv build/version.tmp.json build/version.json
 
-            git checkout -B main
-                
-            git config --global user.name "buildbot"
-            git config --global user.email "buildbot@local"
-                
-            git add build/version.json
-            git commit -m "Bump version to $NEW_VERSION [skip ci]" || echo "No changes"
+                git checkout -B main
+                    
+                git config --global user.name "buildbot"
+                git config --global user.email "buildbot@local"
+                    
+                git add build/version.json
+                git commit -m "Bump version to $NEW_VERSION [skip ci]" || echo "No changes"
 
-            git remote set-url origin https://$(AZURE_DEVOPS_PAT)@dev.azure.com/tmhai2027/NRuuviTag_Az/_git/NRuuviTag_Az
-            git pull --rebase origin main --no-edit || true
-            git push origin main || true
-        displayName: "Automatic Versioning"
+                git remote set-url origin https://$(AZURE_DEVOPS_PAT)@dev.azure.com/tmhai2027/NRuuviTag_Az/_git/NRuuviTag_Az
+                git pull --rebase origin main --no-edit || true
+                git push origin main || true
+          displayName: "Automatic Versioning"
