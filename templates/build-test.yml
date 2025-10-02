@@ -1,6 +1,5 @@
 jobs:
     - job: check_test_needed
-      condition: always()
       steps:
         - checkout: self
           fetchDepth: 0
