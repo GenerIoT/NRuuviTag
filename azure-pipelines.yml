@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - main  # all branches
+      - feature/cicd-sync-iothub  # all branches
   paths:
     exclude:
       - '**/*.md'
