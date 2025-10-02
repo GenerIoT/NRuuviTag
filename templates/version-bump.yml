@@ -36,7 +36,7 @@ jobs:
                 git add build/version.json
                 git commit -m "Bump version to $NEW_VERSION [skip ci]" || echo "No changes"
 
-                git remote set-url origin https://$(AZURE_DEVOPS_PAT)@dev.azure.com/tmhai2027/NRuuviTag_Az/_git/NRuuviTag_Az
+                git remote set-url origin https://$(AZURE_DEVOPS_PAT)@dev.azure.com//generiotdemo/Demo%20D4/_git/NRuuviTag
                 git pull --rebase origin $(TARGET_BRANCH) --no-edit || true
                 git push origin $(TARGET_BRANCH) || true
           name: SetVersion
