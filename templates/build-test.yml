@@ -1,85 +1,84 @@
 jobs:
-    - job: check_test_needed
-      steps:
-        - checkout: self
-          fetchDepth: 0
+  - job: check_test_needed
+    steps:
+      - checkout: self
+        fetchDepth: 0
 
-        - bash: |
-            echo "##vso[task.setvariable variable=commitSha]$(Build.SourceVersion)"
+      - bash: |
+          echo "##vso[task.setvariable variable=commitSha]$(Build.SourceVersion)"
 
-            if [ "$(Build.Reason)" == "IndividualCI" ]; then
-              echo "##vso[task.setvariable variable=shouldTest;isOutput=true]true"
+          if [ "$(Build.Reason)" == "IndividualCI" ]; then
+            echo "##vso[task.setvariable variable=shouldTest;isOutput=true]true"
 
-            elif [ "$(Build.Reason)" == "PullRequest" ]; then
-              COMMIT_SHA=$(Build.SourceVersion)
-              echo "##vso[task.setvariable variable=commitSha]$COMMIT_SHA"
+          elif [ "$(Build.Reason)" == "PullRequest" ]; then
+            COMMIT_SHA=$(Build.SourceVersion)
+            echo "##vso[task.setvariable variable=commitSha]$COMMIT_SHA"
 
-              # Query Azure DevOps for recent successful runs on this commit
-              RECENT_RUN=$(az pipelines runs list \
-                --org $(System.TeamFoundationCollectionUri) \
-                --project $(System.TeamProject) \
-                --pipeline-ids $(System.DefinitionId) \
-                --status completed \
-                --result succeeded \
-                --top 10 \
-                --query "[?sourceVersion=='$COMMIT_SHA'].id" -o tsv)
+            # Query Azure DevOps for recent successful runs on this commit
+            RECENT_RUN=$(az pipelines runs list \
+              --org $(System.TeamFoundationCollectionUri) \
+              --project $(System.TeamProject) \
+              --pipeline-ids $(System.DefinitionId) \
+              --status completed \
+              --result succeeded \
+              --top 10 \
+              --query "[?sourceVersion=='$COMMIT_SHA'].id" -o tsv)
 
-              if [ -n "$RECENT_RUN" ]; then
-                echo "##vso[task.setvariable variable=shouldTest;isOutput=true]false"
-              else
-                echo "##vso[task.setvariable variable=shouldTest;isOutput=true]true"
-              fi
-
+            if [ -n "$RECENT_RUN" ]; then
+              echo "##vso[task.setvariable variable=shouldTest;isOutput=true]false"
             else
               echo "##vso[task.setvariable variable=shouldTest;isOutput=true]true"
             fi
-          name: checkTests
 
-    - job: build_and_test
-      displayName: "Build and Test"
-      dependsOn: check_test_needed
-      condition: eq(dependencies.check_test_needed.outputs['checkTests.shouldTest'], 'true')
+          else
+            echo "##vso[task.setvariable variable=shouldTest;isOutput=true]true"
+        name: checkTests
 
-      steps:
-        - checkout: self
-          submodules: true
+  - job: build_and_test
+    displayName: "Build and Test"
+    dependsOn: check_test_needed
+    condition: eq(dependencies.check_test_needed.outputs['checkTests.shouldTest'], 'true')
 
-        - task: Cache@2
-          inputs:
-            key: 'nuget | "$(Agent.OS)" | **/*.csproj, **/Directory.Packages.props'
-            restoreKeys: |
-              nuget | "$(Agent.OS)"
-            path: /home/vsts/.nuget/packages
+    steps:
+      - checkout: self
+        submodules: true
 
-        - task: Cache@2
-          inputs:
-            key: 'cake-tools | "$(Agent.OS)" | build.cake'
-            restoreKeys: |
-              cake-tools | "$(Agent.OS)"
-            path: /home/vsts/work/1/s/~/tools
+      - task: Cache@2
+        inputs:
+          key: 'nuget | "$(Agent.OS)" | **/*.csproj, **/Directory.Packages.props'
+          restoreKeys: |
+            nuget | "$(Agent.OS)"
+          path: /home/vsts/.nuget/packages
 
-        - script: chmod +x build.sh
+      - task: Cache@2
+        inputs:
+          key: 'cake-tools | "$(Agent.OS)" | build.cake'
+          restoreKeys: |
+            cake-tools | "$(Agent.OS)"
+          path: /home/vsts/work/1/s/~/tools
 
-        - script: ./build.sh --target=Build --configuration="$BUILD_CONFIGURATION"
-          displayName: "Build .NET"
+      - script: chmod +x build.sh
 
-        - script: ./build.sh --target=Test --configuration="$BUILD_CONFIGURATION"
-          displayName: "Run Tests"
-        
-        - script: |
-            echo "=== Debug Info ==="
-            echo "Current working directory: $(pwd)"
-            echo ""
-            
-            echo "--- NuGet packages ---"
-            ls -la /home/vsts/.nuget/packages
-            du -sh /home/vsts/.nuget/packages || true
-            echo ""
-            
-            echo "--- Cake tools ---"
-            ls -la /home/vsts/tools
-            du -sh /home/vsts/tools || true
-            echo ""
-            
-            echo "=== End Debug Info ==="
+      - script: ./build.sh --target=Build --configuration="$BUILD_CONFIGURATION"
+        displayName: "Build .NET"
+
+      - script: ./build.sh --target=Test --configuration="$BUILD_CONFIGURATION"
+        displayName: "Run Tests"
+
+      - script: |
+          echo "=== Debug Info ==="
+          echo "Current working directory: $(pwd)"
+          echo ""
+
+          echo "--- NuGet packages ---"
+          ls -la /home/vsts/.nuget/packages
+          du -sh /home/vsts/.nuget/packages || true
+          echo ""
+
+          echo "--- Cake tools ---"
+          ls -la /home/vsts/tools
+          du -sh /home/vsts/tools || true
+          echo ""
+
+          echo "=== End Debug Info ==="
         displayName: "Debug cached folders"
