@@ -38,4 +38,4 @@ jobs:
                 git remote set-url origin https://$(AZURE_DEVOPS_PAT)@dev.azure.com/tmhai2027/NRuuviTag_Az/_git/NRuuviTag_Az
                 git pull --rebase origin main --no-edit || true
                 git push origin main || true
-          displayName: "Automatic Versioning"
+          name: SetVersion
