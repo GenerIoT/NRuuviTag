@@ -35,12 +35,12 @@ jobs:
           fi
         name: checkTests
 
-        - script: |
-            echo "Build.SourceBranch = $(Build.SourceBranch)"
-            echo "Build.Reason = $(Build.Reason)"
-            echo "TARGET_BRANCH = $(TARGET_BRANCH)"
-            echo "Expected branch ref: refs/heads/$(TARGET_BRANCH)"
-          displayName: "🔍 Debug Variables"
+      - script: |
+          echo "Build.SourceBranch = $(Build.SourceBranch)"
+          echo "Build.Reason = $(Build.Reason)"
+          echo "TARGET_BRANCH = $(TARGET_BRANCH)"
+          echo "Expected branch ref: refs/heads/$(TARGET_BRANCH)"
+        displayName: "🔍 Debug Variables"
 
   - job: build_and_test
     displayName: "Build and Test"
