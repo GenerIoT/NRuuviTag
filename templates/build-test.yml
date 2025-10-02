@@ -32,6 +32,7 @@ jobs:
 
           else
             echo "##vso[task.setvariable variable=shouldTest;isOutput=true]true"
+          fi
         name: checkTests
 
   - job: build_and_test
