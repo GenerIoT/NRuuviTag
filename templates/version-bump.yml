@@ -1,6 +1,6 @@
 jobs: 
     - job: version_bump
-      condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'IndividualCI'))
+      condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/${TARGET_BRANCH}'), eq(variables['Build.Reason'], 'IndividualCI'))
       variables: 
         - group: Credentials
 
@@ -29,7 +29,7 @@ jobs:
 
                 mv build/version.tmp.json build/version.json
 
-                git checkout -B main
+                git checkout -B ${TARGET_BRANCH}
                     
                 git config --global user.name "buildbot"
                 git config --global user.email "buildbot@local"
@@ -38,6 +38,6 @@ jobs:
                 git commit -m "Bump version to $NEW_VERSION [skip ci]" || echo "No changes"
 
                 git remote set-url origin https://$(AZURE_DEVOPS_PAT)@dev.azure.com/tmhai2027/NRuuviTag_Az/_git/NRuuviTag_Az
-                git pull --rebase origin main --no-edit || true
-                git push origin main || true
+                git pull --rebase origin ${TARGET_BRANCH} --no-edit || true
+                git push origin ${TARGET_BRANCH} || true
           name: SetVersion
