@@ -1,6 +1,5 @@
 jobs: 
     - job: version_bump
-      dependsOn: build_and_test
       condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'IndividualCI'))
 
       steps:
