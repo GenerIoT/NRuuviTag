@@ -1,59 +1,75 @@
 trigger:
   branches:
     include:
-      - "*"   # Trigger on any branch change
+      - '*'  # all branches
+  paths:
+    exclude:
+      - '**/*.md'
+      - 'docs/*'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.gitmodules'
+      - '.editorconfig'
+      - 'LICENSE*'
+      - 'THIRD-PARTY-NOTICES.md'
 
-variables:
-- group: Sync-pipeline
+pr:
+  branches:
+    include:
+      - main
+      - master
+  paths:
+    exclude:
+      - '**/*.md'
+      - 'docs/*'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.gitmodules'
+      - '.editorconfig'
+      - 'LICENSE*'
+      - 'THIRD-PARTY-NOTICES.md'
 
 pool:
   vmImage: 'ubuntu-latest'
 
-steps:
-- checkout: self
-  fetchDepth: 0   # Fetch full history for all branches
+variables:
+  - name: TARGET_BRANCH
+    value: main
+  - name: CAKE_VERSION
+    value: 1.1.0
+  - name: BUILD_CONFIGURATION
+    value: Release
 
-- script: |
-    # Configure Git
-    git config --global user.name "Hai Chu"
-    git config --global user.email "hai.m.chu20@gmail.com"
-  
-    # Add GitHub remote
-    GITHUB_URL="https://$(GITHUB_TOKEN)@github.com/$(GITHUB_REPO).git"
-    git remote add github $GITHUB_URL
+  - name: REGISTRY
+    value: $(CONTAINER_REGISTRY)
+  - name: USERNAME
+    value: $(AZ_NRUUVITAG_USERNAME)
+  - name: PASSWORD
+    value: $(AZ_NRUUVITAG_PASS)
+  - name: IMAGE_NAME
+    value: $(CONTAINER_IMAGE_NAME)
+  - name: AZURE_DEVOPS_PAT
+    value: $(AZ_DEVOPS_PAT)
 
-    # Fetch all branches and tags from Azure DevOps
-    git fetch origin "+refs/heads/*:refs/remotes/origin/*" --prune
-    git fetch origin "+refs/tags/*:refs/tags/*" --prune
+stages:
+  - stage: BuildAndTest
+    displayName: "Build and Test"
+    condition: always()
+    jobs: 
+      - template: templates/build-test.yml
+    
 
-    # Fetch all branches from GitHub
-    git fetch github "+refs/heads/*:refs/remotes/github/*" --prune
+  - stage: VersionBump
+    displayName: "Version Bump"
+    dependsOn: BuildAndTest
+    condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'IndividualCI'))
+    jobs:
+      - template: templates/version-bump.yml
 
-    # Push each branch except origin/HEAD
-    for branch in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/ | grep -v '^origin/HEAD$'); do
-      branch_name=${branch#origin/}
-      echo "Syncing branch $branch_name to GitHub"
+  - stage: Container
+    displayName: "Build and Push Container"
+    dependsOn: VersionBump
+    condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'IndividualCI'))
+    jobs:
+      - template: templates/build-push-container.yml
 
-      # Create empty commit to mark sync (skip CI)
-      git checkout -B $branch_name origin/$branch_name
-      git commit --allow-empty -m "sync from Azure DevOps [skip ci]"
-
-      # Push to GitHub
-      git push github "refs/heads/$branch_name:refs/heads/$branch_name" --force --no-verify
-    done
-
-    # Push tags too
-    git push github --tags --force --no-verify
-
-    # Delete GitHub branches that no longer exist in Azure DevOps
-    for gh_branch in $(git for-each-ref --format='%(refname:short)' refs/remotes/github/ | grep -v '^github/HEAD$'); do
-      branch_name=${gh_branch#github/}
-      if ! git show-ref --verify --quiet refs/remotes/origin/$branch_name; then
-        echo "Deleting GitHub branch $branch_name (deleted in Azure DevOps)"
-        git push github --delete $branch_name || true
-      fi
-    done
-  displayName: "Sync Azure DevOps → GitHub (with deletions and skip CI)"
-  env:
-    GITHUB_TOKEN: $(GITHUB_TOKEN)       # GitHub Personal Access Token
-    GITHUB_REPO: $(GITHUB_REPO) # GitHub repo name
