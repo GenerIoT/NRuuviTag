@@ -44,4 +44,4 @@ jobs:
                 git push github --delete $branch_name || true
             fi
             done
-        displayName: "Sync Azure DevOps → GitHub (with deletions and skip CI)"
+          displayName: "Sync Azure DevOps → GitHub (with deletions and skip CI)"
