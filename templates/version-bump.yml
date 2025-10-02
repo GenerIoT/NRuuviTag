@@ -1,6 +1,8 @@
 jobs: 
     - job: version_bump
       condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'IndividualCI'))
+      variables: 
+        - group: Credentials
 
       steps:
         - checkout: self
