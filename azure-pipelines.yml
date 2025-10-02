@@ -70,6 +70,8 @@ stages:
     displayName: "Build and Push Container"
     dependsOn: VersionBump
     condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'IndividualCI'))
+    variables:
+      VERSION: $[ stageDependencies.VersionBump.version_bump.outputs['SetVersion.version'] ]
     jobs:
       - template: templates/build-push-container.yml
 
