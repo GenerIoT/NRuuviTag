@@ -1,6 +1,6 @@
 jobs: 
     - job: build_and_push_container
-      condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/${TARGET_BRANCH}'), eq(variables['Build.Reason'], 'IndividualCI'))
+      condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/$(TARGET_BRANCH)'), eq(variables['Build.Reason'], 'IndividualCI'))
       variables: 
         - group: DockerLogin
 
@@ -10,8 +10,8 @@ jobs:
           persistCredentials: true
 
         - script: |
-            git fetch origin ${TARGET_BRANCH}
-            git reset --hard origin/${TARGET_BRANCH}
+            git fetch origin $(TARGET_BRANCH)
+            git reset --hard origin/$(TARGET_BRANCH)
             echo "Updated to latest commit with version bump"
           displayName: 'Update to latest commit'
 
