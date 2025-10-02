@@ -1,0 +1,41 @@
+jobs: 
+    - job: build_and_push_container
+      dependsOn: version_bump
+      condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'IndividualCI'))
+
+      steps:
+        - checkout: self
+          submodules: true
+
+        - task: Cache@2
+          inputs:
+            key: 'nuget | "$(Agent.OS)" | **/*.csproj, **/Directory.Packages.props'
+            restoreKeys: |
+              nuget | "$(Agent.OS)"
+            path: ~/.nuget/packages
+
+        - task: Cache@2
+          inputs:
+            key: 'cake-tools | "$(Agent.OS)" | build.cake'
+            restoreKeys: |
+              cake-tools | "$(Agent.OS)"
+            path: ~/tools
+            
+        - script: chmod +x build.sh
+          displayName: "Make build.sh executable"
+
+        - script: ./build.sh --target=Build --configuration="$BUILD_CONFIGURATION"
+          displayName: "Build .NET"
+
+        - script: |
+            echo $(PASSWORD) | docker login $(REGISTRY) -u $(USERNAME) --password-stdin
+          displayName: "Login to Azure Container Registry"
+
+        - script: ./build.sh --target=PublishContainer --configuration="$BUILD_CONFIGURATION" --property="ContainerRepository=$(IMAGE_NAME)"
+          displayName: "Build and Publish Container"
+
+        - script: |
+            VERSION=$(dependencies.version_bump.outputs['version_bump.version'])
+            docker tag $(IMAGE_NAME):$VERSION $(REGISTRY)/$(IMAGE_NAME):$VERSION
+            docker push $(REGISTRY)/$(IMAGE_NAME):$VERSION
+          displayName: "Tag and Push Container"
