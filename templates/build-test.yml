@@ -67,19 +67,19 @@ jobs:
           displayName: "Run Tests"
         
         - script: |
-          echo "=== Debug Info ==="
-          echo "Current working directory: $(pwd)"
-          echo ""
-          
-          echo "--- NuGet packages ---"
-          ls -la /home/vsts/.nuget/packages
-          du -sh /home/vsts/.nuget/packages || true
-          echo ""
-          
-          echo "--- Cake tools ---"
-          ls -la /home/vsts/tools
-          du -sh /home/vsts/tools || true
-          echo ""
-          
-          echo "=== End Debug Info ==="
+            echo "=== Debug Info ==="
+            echo "Current working directory: $(pwd)"
+            echo ""
+            
+            echo "--- NuGet packages ---"
+            ls -la /home/vsts/.nuget/packages
+            du -sh /home/vsts/.nuget/packages || true
+            echo ""
+            
+            echo "--- Cake tools ---"
+            ls -la /home/vsts/tools
+            du -sh /home/vsts/tools || true
+            echo ""
+            
+            echo "=== End Debug Info ==="
         displayName: "Debug cached folders"
