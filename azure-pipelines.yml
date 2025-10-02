@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - '*'  # all branches
+      - main  # all branches
   paths:
     exclude:
       - '**/*.md'
@@ -77,8 +77,10 @@ stages:
   
   - stage: iot-hub-deployment 
     displayName: "IoT Hub Deployment"
-    dependsOn: Container
+    dependsOn: [Container, VersionBump]
     condition: and(succeeded('VersionBump'), succeeded('ContainerBuild'))
+    variables:
+      VERSION: $[ stageDependencies.VersionBump.version_bump.outputs['SetVersion.version'] ]
     jobs: 
       - template: templates/iot-hub-deployment.yml
 
