@@ -8,7 +8,6 @@
 
         - script: |
             VERSION=$(VERSION)
-
             cat <<EOF > deployment.json
             {
               "content": {
@@ -54,6 +53,16 @@
               TIMESTAMP=$(date -u +"%Y%m%d%H%M%S")
               PRIORITY=${TIMESTAMP:1:10} 
 
+              echo "=== DEBUG INFO ==="
+              echo "TIMESTAMP: $TIMESTAMP"
+              echo "PRIORITY : $PRIORITY"
+              echo "DEPLOYMENT_ID: $(DEPLOYMENT_ID)-$VERSION"
+              echo "TARGET_CONDITION: $(TARGET_CONDITION)"
+              echo "IOTHUB_NAME: $(IOTHUB_NAME)"
+              echo "Deployment JSON (./deployment.json):"
+              cat ./deployment.json
+              echo "=================="
+            
               az iot edge deployment create \
                 --hub-name $(IOTHUB_NAME) \
                 --content ./deployment.json \
