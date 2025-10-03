@@ -5,19 +5,6 @@
         - group: DockerLogin
 
       steps:
-        - task: AzureCLI@2
-          displayName: "Azure Login via Service Connection"
-          inputs:
-            azureSubscription: 'GenerIoT-Demo-CICD-Secret'  # <-- replace with your service connection name
-            scriptType: bash
-            scriptLocation: inlineScript
-            inlineScript: |
-              echo "Logged into Azure"
-              az account show
-
-        - script: |
-            az extension add --name azure-iot
-          displayName: "Install Azure IoT extension"
 
         - script: |
             VERSION=$(VERSION)
@@ -55,17 +42,23 @@
             EOF
           displayName: "📝 Create IoT Edge deployment manifest"
 
-        # 4️⃣ Deploy to IoT Hub
-        - script: |
-            VERSION=$(VERSION)
-            TIMESTAMP=$(date -u +"%Y-%m-%d-%H-%M-%S")
-            PRIORITY=$(date -u +"%Y%m%d%H%M%S")
+        - task: AzureCLI@2
+          inputs:
+            azureSubscription: 'GenerIoT-Demo-CICD-Secret'  # <-- replace with your service connection name
+            scriptType: bash
+            scriptLocation: inlineScript
+            inlineScript: |
+              az extension add --name azure-iot
 
-            az iot edge deployment create \
-              --hub-name $(IOTHUB_NAME) \
-              --content ./deployment.json \
-              --deployment-id "$(DEPLOYMENT_ID)-$VERSION" \
-              --target-condition "$(TARGET_CONDITION)" \
-              --priority $PRIORITY \
-              --labels "{\"tag\":\"$VERSION\",\"cicd\":\"true\",\"source\":\"azure-devops\"}"
-          displayName: "Deploy IoT Edge module"
+              VERSION=$(VERSION)
+              TIMESTAMP=$(date -u +"%Y-%m-%d-%H-%M")
+              PRIORITY=${TIMESTAMP:1:10} 
+
+              az iot edge deployment create \
+                --hub-name $(IOTHUB_NAME) \
+                --content ./deployment.json \
+                --deployment-id "$(DEPLOYMENT_ID)-$VERSION" \
+                --target-condition "$(TARGET_CONDITION)" \
+                --priority $PRIORITY \
+                --labels "{\"tag\":\"$VERSION\",\"cicd\":\"true\",\"source\":\"azure-devops\"}"
+            displayName: "Deploy IoT Edge module"
