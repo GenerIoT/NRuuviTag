@@ -43,6 +43,6 @@ jobs:
 
         - script: |
             VERSION=$(VERSION)
-            docker tag $(IMAGE_NAME):$VERSION $(REGISTRY)/$(IMAGE_NAME):$VERSION
-            docker push $(REGISTRY)/$(IMAGE_NAME):$VERSION
+            docker tag $(IMAGE_NAME):$VERSION $(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION
+            docker push $(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION
           displayName: "Tag and Push Container"
