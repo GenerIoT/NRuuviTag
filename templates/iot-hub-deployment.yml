@@ -84,5 +84,5 @@
                 --deployment-id "$(DEPLOYMENT_ID)-$VERSION" \
                 --target-condition "$(TARGET_CONDITION)" \
                 --priority $PRIORITY \
-                --labels "{\"tag\":\"$VERSION\",\"cicd\":\"true\",\"source\":\"azure-devops\"}"
+                --labels tag="$VERSION" cicd="true" source="azure-devops"
             displayName: "Deploy IoT Edge module"
