@@ -8,13 +8,6 @@
 
         - script: |
             VERSION=$(VERSION)
-            MODULE_NAME=$(MODULE_NAME)
-            ACR_NAME=$(ACR_NAME)
-            LOGIN_SERVER=$(LOGIN_SERVER)
-            IMAGE_NAME=$(IMAGE_NAME)
-            USERNAME=$(USERNAME)
-            PASSWORD=$(PASSWORD)
-            DEVICE_CONNECTION_STRING=$(DEVICE_CONNECTION_STRING)
 
             cat <<EOF > deployment.json
             {
@@ -23,14 +16,14 @@
                   "\$edgeAgent": {
                     "properties.desired": {
                       "modules": {
-                        "$MODULE_NAME": {
+                        "$(MODULE_NAME)": {
                           "type": "docker",
                           "settings": {
-                            "image": "$LOGIN_SERVER/$IMAGE_NAME:$VERSION",
+                            "image": "$(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION",
                             "createOptions": "{\"HostConfig\":{\"Binds\":[\"/var/run/dbus:/var/run/dbus\"],\"Privileged\":true}}"
                           },
                           "env": {
-                            "ConnectionString": { "value": "$DEVICE_CONNECTION_STRING" }
+                            "ConnectionString": { "value": "$(DEVICE_CONNECTION_STRING)" }
                           },
                           "imagePullPolicy": "on-create",
                           "restartPolicy": "always",
@@ -40,8 +33,8 @@
                       "runtime": {
                         "settings": {
                           "registryCredentials": {
-                            "$ACR_NAME": {
-                              "address": "$LOGIN_SERVER",
+                            "$(ACR_NAME)": {
+                              "address": "$(LOGIN_SERVER)",
                               "username": "$USERNAME",
                               "password": "$PASSWORD"
                             }
@@ -65,24 +58,15 @@
               az extension add --name azure-iot
 
               VERSION=$(VERSION)
+              SANITIZED_VERSION=$(echo $VERSION | tr '.' '-')
               TIMESTAMP=$(date -u +"%Y%m%d%H%M%S")
               PRIORITY=${TIMESTAMP:1:10} 
-
-              echo "=== DEBUG INFO ==="
-              echo "TIMESTAMP: $TIMESTAMP"
-              echo "PRIORITY : $PRIORITY"
-              echo "DEPLOYMENT_ID: $(DEPLOYMENT_ID)-$VERSION"
-              echo "TARGET_CONDITION: $(TARGET_CONDITION)"
-              echo "IOTHUB_NAME: $(IOTHUB_NAME)"
-              echo "Deployment JSON (./deployment.json):"
-              cat ./deployment.json
-              echo "=================="
             
               az iot edge deployment create \
                 --hub-name $(IOTHUB_NAME) \
                 --content ./deployment.json \
-                --deployment-id "$(DEPLOYMENT_ID)-$VERSION" \
+                --deployment-id "$(DEPLOYMENT_ID)-$SANITIZED_VERSION" \
                 --target-condition "$(TARGET_CONDITION)" \
                 --priority $PRIORITY \
-                --labels '{"cicd":"true"}'
+                --labels '{"tag":"'$VERSION'", "cicd":"true", "source":"azure-devops"}'
             displayName: "Deploy IoT Edge module"
