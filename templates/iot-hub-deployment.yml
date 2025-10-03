@@ -40,7 +40,7 @@
               }
             }
             EOF
-          displayName: "📝 Create IoT Edge deployment manifest"
+          displayName: "Create IoT Edge deployment manifest"
 
         - task: AzureCLI@2
           inputs:
@@ -51,7 +51,7 @@
               az extension add --name azure-iot
 
               VERSION=$(VERSION)
-              TIMESTAMP=$(date -u +"%Y-%m-%d-%H-%M")
+              TIMESTAMP=$(date -u +"%Y%m%d%H%M%S")
               PRIORITY=${TIMESTAMP:1:10} 
 
               az iot edge deployment create \
