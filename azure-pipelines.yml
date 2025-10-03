@@ -67,7 +67,7 @@ stages:
   - stage: iot_hub_deployment 
     displayName: "IoT Hub Deployment"
     dependsOn: [Container, VersionBump]
-    condition: and(succeeded('VersionBump'), succeeded('ContainerBuild'))
+    condition: and(succeeded('VersionBump'), succeeded('Container'))
     variables:
       VERSION: $[ stageDependencies.VersionBump.version_bump.outputs['SetVersion.version'] ]
     jobs: 
