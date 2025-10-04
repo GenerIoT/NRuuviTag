@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - feature/cicd-sync-iothub  # all branches
+      - '*'  # all branches
   paths:
     exclude:
       - '**/*.md'
@@ -34,7 +34,7 @@ pool:
 
 variables:
   - name: TARGET_BRANCH
-    value: feature/cicd-sync-iothub
+    value: main
   - name: CAKE_VERSION
     value: 1.1.0
   - name: BUILD_CONFIGURATION
