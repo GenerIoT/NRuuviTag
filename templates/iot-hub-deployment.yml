@@ -63,7 +63,7 @@
               PRIORITY=${TIMESTAMP:1:10} 
             
               az iot edge deployment create \
-                --layered \
+                --layered true \
                 --hub-name $(IOTHUB_NAME) \
                 --content ./deployment.json \
                 --deployment-id "$(DEPLOYMENT_ID)-$SANITIZED_VERSION" \
