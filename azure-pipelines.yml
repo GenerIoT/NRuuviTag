@@ -33,12 +33,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  - name: TARGET_BRANCH
-    value: main
-  - name: CAKE_VERSION
-    value: 1.1.0
-  - name: BUILD_CONFIGURATION
-    value: Release
+  - group: Basic
 
 stages:
   - stage: BuildAndTest
