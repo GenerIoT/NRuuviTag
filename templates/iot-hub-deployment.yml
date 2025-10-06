@@ -35,8 +35,8 @@
                           "registryCredentials": {
                             "$(ACR_NAME)": {
                               "address": "$(LOGIN_SERVER)",
-                              "username": "${PULL_USER}",
-                              "password": "${PULL_PASS}"
+                              "username": "$(PULL_USERNAME)",
+                              "password": "$(PULL_PASSWORD)"
                             }
                           }
                         }
