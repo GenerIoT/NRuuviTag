@@ -35,7 +35,7 @@ jobs:
           displayName: "Build .NET"
 
         - script: |
-            echo $(PASSWORD) | docker login $(LOGIN_SERVER) -u $(USERNAME) --password-stdin
+            echo $(PUSH_PASS) | docker login $(LOGIN_SERVER) -u $(PUSH_USER) --password-stdin
           displayName: "Login to Azure Container Registry"
 
         - script: ./build.sh --target=PublishContainer --configuration="$BUILD_CONFIGURATION" --property="ContainerRepository=$(IMAGE_NAME)"
