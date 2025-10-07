@@ -1,31 +1,13 @@
 name: CI/CD
 
 on:
-  # Trigger on pushes to any branch (excluding docs)
+  # Trigger on pushes to any branch (sync always runs, but build/test may be skipped)
   push:
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - '.gitignore'
-      - '.gitattributes'
-      - '.gitmodules'
-      - '.editorconfig'
-      - 'LICENSE*'
-      - 'THIRD-PARTY-NOTICES.md'
 
-  # Trigger on pull requests for validation (excluding docs)
+  # Trigger on pull requests for validation
   pull_request:
     types: [opened, reopened]
     branches: [main, master]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - '.gitignore'
-      - '.gitattributes'
-      - '.gitmodules'
-      - '.editorconfig'
-      - 'LICENSE*'
-      - 'THIRD-PARTY-NOTICES.md'
 
 permissions:
   actions: read
@@ -60,14 +42,40 @@ jobs:
     - name: Check if tests are needed
       id: check
       run: |
-        # - Push events: Always run tests (new code needs validation)
+        # - Push events: Skip tests if only docs/config files changed
         # - Pull requests: Skip if the same commit was already tested on push
         # - Other events: Run tests for safety
 
         if [ "${{ github.event_name }}" == "push" ]; then
-          echo "should-test=true" >> $GITHUB_OUTPUT
-          echo "commit-sha=${{ github.sha }}" >> $GITHUB_OUTPUT
-          echo " Push event: Running tests"
+
+          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }})
+          DOC_PATTERNS="\.md$ docs/ \.gitignore$ \.gitattributes$ \.gitmodules$ \.editorconfig$ LICENSE THIRD-PARTY-NOTICES\.md$"
+          
+          # Check if any non-doc files were changed
+          NON_DOC_CHANGED=false
+          while IFS= read -r file; do
+            is_doc=false
+            for pattern in $DOC_PATTERNS; do
+              if echo "$file" | grep -qE "$pattern"; then
+                is_doc=true
+                break
+              fi
+            done
+            if [ "$is_doc" = false ]; then
+              NON_DOC_CHANGED=true
+              break
+            fi
+          done <<< "$CHANGED_FILES"
+          
+          if [ "$NON_DOC_CHANGED" = true ]; then
+            echo "should-test=true" >> $GITHUB_OUTPUT
+            echo "commit-sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "Push event: Code changes detected - running tests"
+          else
+            echo "should-test=false" >> $GITHUB_OUTPUT
+            echo "commit-sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "Push event: Only docs/config files changed - skipping tests"
+          fi
           
         elif [ "${{ github.event_name }}" == "pull_request" ]; then
           # Check if this commit was already tested in a recent push
@@ -144,120 +152,6 @@ jobs:
     - name: Run Tests
       run: |
         ./build.sh --target=Test --configuration=${{ env.BUILD_CONFIGURATION }}
-
-  #Job 2: Version Bump (runs only on main branch)
-  version-bump:
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    outputs:
-      version: ${{ steps.bump.outputs.version }}
-
-   # Only run on push events to main branch (not PRs or other branches)
-    if: github.event_name == 'push' && 
-        github.ref == format('refs/heads/{0}', vars.TARGET_DEPLOYMENT_BRANCH || 'main')
-  
-    steps: 
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-    
-    - name: Automatic versioning 
-      id: bump
-      run: |
-        MAJOR=$(jq -r '.Major' build/version.json)
-        MINOR=$(jq -r '.Minor' build/version.json)
-        PATCH=$(jq -r '.Patch' build/version.json)
-
-        if [ $PATCH -eq 99 ]; then
-          MINOR=$((MINOR + 1))
-          PATCH=0
-          jq --arg new_minor "$MINOR" --arg new_patch "0" '.Minor = ($new_minor | tonumber) | .Patch = 0' build/version.json > build/version.tmp.json
-        else
-          PATCH=$((PATCH + 1))
-          jq --arg new_patch "$PATCH" '.Patch = ($new_patch | tonumber)' build/version.json > build/version.tmp.json
-        fi
-
-        NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-        echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-        
-        jq empty build/version.tmp.json  # Validate JSON is valid
-        mv build/version.tmp.json build/version.json
-
-        git config --global user.name "${{ github.actor }}"
-        git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-        git add build/version.json
-        git commit -m "Bump version to $NEW_VERSION [skip ci]"
-        
-        git pull --rebase origin ${{ env.TARGET_BRANCH }} --no-edit
-        git push origin ${{ env.TARGET_BRANCH }}
-
-  # Job 3: Build and Push Container (ONLY on main branch pushes)
-  build-and-push-container:
-    runs-on: ubuntu-latest
-    needs: version-bump
-
-   # Only run on push events to main branch (not PRs or other branches)
-    if: github.event_name == 'push' && 
-        github.ref == format('refs/heads/{0}', vars.TARGET_DEPLOYMENT_BRANCH || 'main')
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-        ref: ${{ env.TARGET_BRANCH }}  # Ensure we get the latest main branch with version bump
-
-    # Cache .NET packages (reuse from build-and-test)
-    - name: Cache .NET packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
-
-    # Cache Cake tools (reuse from build-and-test)
-    - name: Cache Cake tools
-      uses: actions/cache@v3
-      with:
-        path: tools
-        key: ${{ runner.os }}-cake-tools-${{ hashFiles('build.cake') }}
-        restore-keys: |
-          ${{ runner.os }}-cake-tools-
-
-    # Setup Cake
-    - name: Setup Cake
-      uses: cake-build/cake-action@v3
-      with:
-        version: ${{ env.CAKE_VERSION }}
-
-    - name: Make build.sh executable
-      run: |
-        chmod +x build.sh
-
-    # Build .NET (required before container build)
-    - name: Build .NET
-      run: |
-        ./build.sh --target=Build --configuration=${{ env.BUILD_CONFIGURATION }}
-
-    # Login to Azure Container Registry
-    - name: Log in to Azure Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ env.USERNAME }}
-        password: ${{ env.PASSWORD }}
-
-    # Build Container at local 
-    - name: Build and Push Container at local daemon
-      run: |
-        ./build.sh --target=PublishContainer --configuration=${{ env.BUILD_CONFIGURATION }} \
-        --property="ContainerRepository=${{ env.IMAGE_NAME }}"
-    
-    - name: Extract version and tag Docker image
-      run: |
-        VERSION="${{ needs.version-bump.outputs.version }}"
-        docker tag ${{ env.IMAGE_NAME }}:$VERSION ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$VERSION
-        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$VERSION
   
   sync-to-azure-devops:
     # Only sync if something is being pushed, not if e.g. PR created
