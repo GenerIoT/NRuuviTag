@@ -22,17 +22,6 @@
                           "ConnectionString": { "value": "$(DEVICE_CONNECTION_STRING)" }
                         }
                       }
-                    },
-                    "runtime": {
-                      "settings": {
-                        "registryCredentials": {
-                          "$(ACR_NAME)": {
-                            "address": "$(LOGIN_SERVER)",
-                            "username": "$(PULL_USERNAME)",
-                            "password": "$(PULL_PASSWORD)"
-                          }
-                        }
-                      }
                     }
                   }
                 }
