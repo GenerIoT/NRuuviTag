@@ -10,6 +10,7 @@ env:
   AZURE_DEVOPS_REPO: ${{ vars.AZURE_DEVOPS_REPO || github.event.repository.name }}  # Target repo name (defaults to current repo name)
   USER_NAME: ${{ secrets.AZURE_DEVOPS_USERNAME }}  # Azure DevOps username
   PAT: ${{ secrets.AZURE_DEVOPS_PAT }}  # Azure DevOps Personal Access Token
+  TRIGGER_BRANCH: ${{ vars.AZURE_TRIGGER_BRANCH || 'main' }}
 
 jobs:
   sync-to-azure-devops:
@@ -47,8 +48,7 @@ jobs:
           echo "Syncing branch $branch_name to Azure DevOps"
 
           git checkout -B $branch_name origin/$branch_name
-          git commit --allow-empty -m "sync from GitHub [skip ci]"
-
+          [[ ${branch_name} == ${{ env.TRIGGER_BRANCH }} ]] && git commit --allow-empty -m "Sync DEPLOYMENT branch '${branch_name}' GitHub->Azure" || git commit --allow-empty -m "[skip ci] Sync branch '${branch_name}' GitHub -> Azure"
           git push azure "refs/heads/$branch_name:refs/heads/$branch_name" --force --no-verify
         done
       
