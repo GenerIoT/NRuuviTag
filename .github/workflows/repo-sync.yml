@@ -60,8 +60,6 @@ jobs:
             echo "  → New branch, syncing..."
           fi
 
-          git checkout -B $branch_name origin/$branch_name
-          [[ ${branch_name} == ${{ env.TRIGGER_BRANCH }} ]] && git commit -m "Sync DEPLOYMENT branch '${branch_name}' GitHub->Azure" || git commit -m "Sync branch '${branch_name}' GitHub -> Azure"
           git push azure "refs/heads/$branch_name:refs/heads/$branch_name" --force --no-verify
         done
       
