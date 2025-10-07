@@ -190,13 +190,12 @@ jobs:
         
         git pull --rebase origin ${{ env.TARGET_BRANCH }} --no-edit
         git push origin ${{ env.TARGET_BRANCH }}
-        
 
   # Job 3: Build and Push Container (ONLY on main branch pushes)
   build-and-push-container:
     runs-on: ubuntu-latest
     needs: version-bump
-    
+
    # Only run on push events to main branch (not PRs or other branches)
     if: github.event_name == 'push' && 
         github.ref == format('refs/heads/{0}', vars.TARGET_DEPLOYMENT_BRANCH || 'main')
@@ -261,8 +260,8 @@ jobs:
         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$VERSION
   
   sync-to-azure-devops:
+    if: github.event_name == 'push'
     uses: ./.github/workflows/repo-sync.yml
     # Wait for all 4 jobs to complete
-    needs: [check-test-needed, build-and-test, version-bump, build-and-push-container]
-    if: always()
+    needs: [check-test-needed, build-and-test]
     secrets: inherit
