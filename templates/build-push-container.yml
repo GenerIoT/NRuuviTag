@@ -38,11 +38,22 @@ jobs:
             echo $(PUSH_PASS) | docker login $(LOGIN_SERVER) -u $(PUSH_USER) --password-stdin
           displayName: "Login to Azure Container Registry"
 
-        - script: ./build.sh --target=PublishContainer --configuration="$BUILD_CONFIGURATION" --property="ContainerRepository=$(IMAGE_NAME)"
-          displayName: "Build and Publish Container"
-
         - script: |
             VERSION=$(VERSION)
-            docker tag $(IMAGE_NAME):$VERSION $(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION
-            docker push $(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION
-          displayName: "Tag and Push Container"
+            ./build.sh --target=PublishContainer --configuration="$BUILD_CONFIGURATION" --property="ContainerRepository=$(IMAGE_NAME)"
+            docker tag $(IMAGE_NAME):$VERSION $(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION-x64
+            docker push $(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION-x64
+
+            ./build.sh --target=PublishContainer --configuration="$BUILD_CONFIGURATION" --property="ContainerRepository=$(IMAGE_NAME)" --container-arch=arm64
+            docker tag $(IMAGE_NAME):$VERSION $(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION-arm64
+            docker push $(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION-arm64
+
+            docker manifest annotate $(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION \
+              $(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION-x64 --arch amd64 --os linux
+            
+            docker manifest annotate $(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION \
+              $(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION-arm64 --arch arm64 --os linux
+
+            docker manifest push $(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION
+
+          displayName: "Build and Publish Container"
