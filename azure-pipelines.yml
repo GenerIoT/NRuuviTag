@@ -70,9 +70,7 @@ stages:
 
   - stage: SyncRepo
     displayName: "Sync to GitHub"
-    dependsOn: iot_hub_deployment
-    condition: always()
+    dependsOn: BuildAndTest
+    condition: and(succeeded('BuildAndTest'), eq(variables['Build.Reason'], 'IndividualCI'))
     jobs: 
       - template: templates/repo-sync.yml
-
-
