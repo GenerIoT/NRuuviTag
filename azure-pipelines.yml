@@ -70,7 +70,8 @@ stages:
 
   - stage: SyncRepo
     displayName: "Sync to GitHub"
-    dependsOn: BuildAndTest
-    condition: and(succeeded('BuildAndTest'), eq(variables['Build.Reason'], 'IndividualCI'))
-    jobs: 
+    dependsOn: BuildAndTest, VersionBump
+    # Only sync after to also sync any newly created commits (back) to GitHub
+    condition: eq(variables['Build.Reason'], 'IndividualCI')
+    jobs:
       - template: templates/repo-sync.yml
