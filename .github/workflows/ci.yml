@@ -32,18 +32,18 @@ permissions:
   contents: write
   packages: write  
 
-
 env:
+  # Vars
   TARGET_BRANCH: ${{ vars.TARGET_DEPLOYMENT_BRANCH || 'main' }}
   CAKE_VERSION: ${{ vars.CAKE_VERSION || '1.1.0' }}
   BUILD_CONFIGURATION: ${{ vars.BUILD_CONFIGURATION || 'Release' }}
+  # Secrets
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
   REGISTRY: ${{ secrets.REGISTRY }}
   USERNAME: ${{ secrets.AZ_NRUUVITAG_USERNAME }}
   PASSWORD: ${{ secrets.AZ_NRUUVITAG_PASS }}
   IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
-  
+
 jobs:
   # Job 0: Check if we need to run tests
   check-test-needed:
