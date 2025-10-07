@@ -8,34 +8,34 @@
         - script: |
             VERSION=$(VERSION)
 
-            cat <<EOF > deployment.json
-            {
-              "content": {
-                "modulesContent": {
-                  "\$edgeAgent": {
-                    "properties.desired": {
-                      "modules": {
-                        "$(MODULE_NAME)": {
-                          "type": "docker",
+                cat <<EOF > deployment.json
+                {
+                  "modulesContent": {
+                    "\$edgeAgent": {
+                      "properties.desired": {
+                        "modules": {
+                          "$(MODULE_NAME)": {
+                            "type": "docker",
+                            "settings": {
+                              "image": "$(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION",
+                              "createOptions": "{\"HostConfig\":{\"Binds\":[\"/var/run/dbus:/var/run/dbus\"],\"Privileged\":true}}"
+                            },
+                            "env": {
+                              "ConnectionString": { "value": "$(DEVICE_CONNECTION_STRING)" }
+                            },
+                            "imagePullPolicy": "on-create",
+                            "restartPolicy": "always",
+                            "startupOrder": 100
+                          }
+                        },
+                        "runtime": {
                           "settings": {
-                            "image": "$(LOGIN_SERVER)/$(IMAGE_NAME):$VERSION",
-                            "createOptions": "{\"HostConfig\":{\"Binds\":[\"/var/run/dbus:/var/run/dbus\"],\"Privileged\":true}}"
-                          },
-                          "env": {
-                            "ConnectionString": { "value": "$(DEVICE_CONNECTION_STRING)" }
-                          },
-                          "imagePullPolicy": "on-create",
-                          "restartPolicy": "always",
-                          "startupOrder": 100
-                        }
-                      },
-                      "runtime": {
-                        "settings": {
-                          "registryCredentials": {
-                            "$(ACR_NAME)": {
-                              "address": "$(LOGIN_SERVER)",
-                              "username": "$(PULL_USERNAME)",
-                              "password": "$(PULL_PASSWORD)"
+                            "registryCredentials": {
+                              "$(ACR_NAME)": {
+                                "address": "$(LOGIN_SERVER)",
+                                "username": "$(PULL_USERNAME)",
+                                "password": "$(PULL_PASSWORD)"
+                              }
                             }
                           }
                         }
@@ -43,10 +43,8 @@
                     }
                   }
                 }
-              }
-            }
-            EOF
-          displayName: "Create IoT Edge deployment manifest"
+                EOF
+            displayName: "Create IoT Edge deployment manifest"
 
         - task: AzureCLI@2
           inputs:
