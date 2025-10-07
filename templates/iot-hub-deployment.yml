@@ -39,7 +39,7 @@
               }
             }
             EOF
-            displayName: "Create IoT Edge deployment manifest"
+          displayName: "Create IoT Edge deployment manifest"
 
         - task: AzureCLI@2
           inputs:
