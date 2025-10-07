@@ -260,8 +260,9 @@ jobs:
         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$VERSION
   
   sync-to-azure-devops:
+    # Only sync if something is being pushed, not if e.g. PR created
     if: github.event_name == 'push'
     uses: ./.github/workflows/repo-sync.yml
-    # Wait for all 4 jobs to complete
+    # Wait for the following jobs to be finished/skipped
     needs: [check-test-needed, build-and-test]
     secrets: inherit
