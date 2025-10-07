@@ -1,0 +1,74 @@
+jobs:
+  - job: check_test_needed
+    steps:
+      - checkout: self
+        fetchDepth: 0
+
+      - bash: |
+          echo "##vso[task.setvariable variable=commitSha]$(Build.SourceVersion)"
+
+          if [ "$(Build.Reason)" == "IndividualCI" ]; then
+            echo "##vso[task.setvariable variable=shouldTest;isOutput=true]true"
+
+          elif [ "$(Build.Reason)" == "PullRequest" ]; then
+            COMMIT_SHA=$(Build.SourceVersion)
+            echo "##vso[task.setvariable variable=commitSha]$COMMIT_SHA"
+
+            # Query Azure DevOps for recent successful runs on this commit
+            RECENT_RUN=$(az pipelines runs list \
+              --org $(System.TeamFoundationCollectionUri) \
+              --project $(System.TeamProject) \
+              --pipeline-ids $(System.DefinitionId) \
+              --status completed \
+              --result succeeded \
+              --top 10 \
+              --query "[?sourceVersion=='$COMMIT_SHA'].id" -o tsv)
+
+            if [ -n "$RECENT_RUN" ]; then
+              echo "##vso[task.setvariable variable=shouldTest;isOutput=true]false"
+            else
+              echo "##vso[task.setvariable variable=shouldTest;isOutput=true]true"
+            fi
+
+          else
+            echo "##vso[task.setvariable variable=shouldTest;isOutput=true]true"
+          fi
+        name: checkTests
+
+      - script: |
+          echo "Build.SourceBranch = $(Build.SourceBranch)"
+          echo "Build.Reason = $(Build.Reason)"
+          echo "TARGET_BRANCH = $(TARGET_BRANCH)"
+          echo "Expected branch ref: refs/heads/$(TARGET_BRANCH)"
+        displayName: "🔍 Debug Variables"
+
+  - job: build_and_test
+    displayName: "Build and Test"
+    dependsOn: check_test_needed
+    condition: eq(dependencies.check_test_needed.outputs['checkTests.shouldTest'], 'true')
+
+    steps:
+      - checkout: self
+        submodules: true
+
+      - task: Cache@2
+        inputs:
+          key: 'nuget | "$(Agent.OS)" | **/*.csproj, **/Directory.Packages.props'
+          restoreKeys: |
+            nuget | "$(Agent.OS)"
+          path: /home/vsts/.nuget/packages
+
+      - task: Cache@2
+        inputs:
+          key: 'cake-tools | "$(Agent.OS)" | build.cake'
+          restoreKeys: |
+            cake-tools | "$(Agent.OS)"
+          path: ./tools
+
+      - script: chmod +x build.sh
+
+      - script: ./build.sh --target=Build --configuration="$BUILD_CONFIGURATION"
+        displayName: "Build .NET"
+
+      - script: ./build.sh --target=Test --configuration="$BUILD_CONFIGURATION"
+        displayName: "Run Tests"

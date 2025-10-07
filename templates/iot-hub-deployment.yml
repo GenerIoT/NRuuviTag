@@ -1,0 +1,70 @@
+  jobs:
+    - job: deploy_to_iot_hub
+      variables:
+        - group: IoTDeployment
+        - group: DockerLogin
+
+      steps:
+        - script: |
+            VERSION=$(VERSION)
+
+            cat <<EOF > deployment.json
+            {
+              "id": "layered-deployment",
+              "schemaVersion": null,
+              "labels": {},
+              "content": {
+                "modulesContent": {
+                  "\$edgeAgent": {
+                    "properties.desired.modules.$(MODULE_NAME)": {
+                      "env": {
+                        "ConnectionString": {
+                          "value": "$(DEVICE_CONNECTION_STRING)"
+                        }
+                      },
+                      "imagePullPolicy": "on-create",
+                      "restartPolicy": "always",
+                      "startupOrder": 100,
+                      "settings": {
+                        "image": "$(LOGIN_SERVER)/$(IMAGE_NAME):$(VERSION)",
+                        "createOptions": "{\"HostConfig\":{\"Binds\":[\"/var/run/dbus:/var/run/dbus\"],\"Privileged\":true}}"
+                      },
+                      "status": "running",
+                      "type": "docker"
+                    },
+                    "properties.desired.runtime.settings.registryCredentials.crtasegeneriotdemo": {
+                      "address": "$(LOGIN_SERVER)",
+                      "password": "$(PULL_PASSWORD)",
+                      "username": "$(PULL_USERNAME)"
+                    }
+                  }
+                }
+              }
+            }
+            EOF
+          displayName: "Create IoT Edge deployment manifest"
+
+
+
+        - task: AzureCLI@2
+          inputs:
+            azureSubscription: 'GenerIoT-Demo-CICD-Secret'  # <-- replace with your service connection name
+            scriptType: bash
+            scriptLocation: inlineScript
+            inlineScript: |
+              az extension add --name azure-iot
+
+              VERSION=$(VERSION)
+              SANITIZED_VERSION=$(echo $VERSION | tr '.' '-')
+              TIMESTAMP=$(date -u +"%Y%m%d%H%M%S")
+              PRIORITY=${TIMESTAMP:1:10} 
+            
+              az iot edge deployment create \
+                --layered true \
+                --hub-name $(IOTHUB_NAME) \
+                --content ./deployment.json \
+                --deployment-id "$(DEPLOYMENT_ID)-$SANITIZED_VERSION" \
+                --target-condition "$(TARGET_CONDITION)" \
+                --priority $PRIORITY \
+                --labels '{"tag":"'$VERSION'", "cicd":"true", "source":"azure-devops"}'
+            displayName: "Deploy IoT Edge module"

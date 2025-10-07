@@ -1,0 +1,67 @@
+name: Repo Sync  
+
+on:
+  workflow_call:
+
+env:
+  # Azure DevOps configuration - set these as repository secrets/variables
+  AZURE_DEVOPS_ORG: ${{ vars.AZURE_DEVOPS_ORG }}  # Your Azure DevOps organization name
+  AZURE_DEVOPS_PROJECT: ${{ vars.AZURE_DEVOPS_PROJECT }}  # Your Azure DevOps project name
+  AZURE_DEVOPS_REPO: ${{ vars.AZURE_DEVOPS_REPO || github.event.repository.name }}  # Target repo name (defaults to current repo name)
+  USER_NAME: ${{ secrets.AZURE_DEVOPS_USERNAME }}  # Azure DevOps username
+  PAT: ${{ secrets.AZURE_DEVOPS_PAT }}  # Azure DevOps Personal Access Token
+  TRIGGER_BRANCH: ${{ vars.TARGET_DEPLOYMENT_BRANCH || 'main' }}
+
+jobs:
+  sync-to-azure-devops:
+    runs-on: ubuntu-latest  
+    
+    steps:
+    - name: Checkout source repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for complete sync
+
+    - name: Configure git for Azure DevOps
+      run: |
+        git config --global user.name "Hai Chu"
+        git config --global user.email "hai.m.chu20@gmail.com"
+
+    - name: Add Azure DevOps remote and sync
+      run: |
+        AZURE_URL="https://${{ env.USER_NAME }}:${{ env.PAT }}@dev.azure.com/${{ env.AZURE_DEVOPS_ORG }}/${{ env.AZURE_DEVOPS_PROJECT }}/_git/${{ env.AZURE_DEVOPS_REPO }}"
+        git remote add azure "$AZURE_URL"
+        
+    - name: Fetch all branches/tags from GitHub
+      run: |
+        git fetch origin "+refs/heads/*:refs/remotes/origin/*" --prune
+        git fetch origin "+refs/tags/*:refs/tags/*" --prune
+        
+    - name: Fetch all branches from Azure DevOps
+      run: |
+        git fetch azure "+refs/heads/*:refs/remotes/azure/*" --prune
+        
+    - name: Sync branches to Azure DevOps
+      run: |
+        for branch in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/ | grep -v '^origin/HEAD$'); do
+          branch_name=${branch#origin/}
+          echo "Syncing branch $branch_name to Azure DevOps"
+
+          git checkout -B $branch_name origin/$branch_name
+          [[ ${branch_name} == ${{ env.TRIGGER_BRANCH }} ]] && git commit --allow-empty -m "Sync DEPLOYMENT branch '${branch_name}' GitHub->Azure" || git commit --allow-empty -m "[skip ci] Sync branch '${branch_name}' GitHub -> Azure"
+          git push azure "refs/heads/$branch_name:refs/heads/$branch_name" --force --no-verify
+        done
+      
+    - name: Sync tags
+      run: |
+        git push azure --tags --force --no-verify
+
+    - name: Delete Azure DevOps branches removed from GitHub
+      run: |
+        for ado_branch in $(git for-each-ref --format='%(refname:short)' refs/remotes/azure/ | grep -v '^azure/HEAD$'); do
+          branch_name=${ado_branch#azure/}
+          if ! git show-ref --verify --quiet refs/remotes/origin/$branch_name; then
+            echo "Deleting Azure DevOps branch $branch_name (deleted in GitHub)"
+            git push azure --delete $branch_name || true
+          fi
+        done
