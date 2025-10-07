@@ -10,18 +10,30 @@
 
             cat <<EOF > deployment.json
             {
-              "modulesContent": {
-                "\$edgeAgent": {
-                  "properties.desired": {
-                    "modules": {
-                      "$(MODULE_NAME)": {
-                        "settings": {
-                          "image": "$(LOGIN_SERVER)/$(IMAGE_NAME):$(VERSION)"
-                        },
-                        "env": {
-                          "ConnectionString": { "value": "$(DEVICE_CONNECTION_STRING)" }
+              "id": "layered-deployment",
+              "schemaVersion": null,
+              "labels": {},
+              "content": {
+                "modulesContent": {
+                  "\$edgeAgent": {
+                    "properties.desired.modules.$(MODULE_NAME)": {
+                      "env": {
+                        "ConnectionString": {
+                          "value": "$(DEVICE_CONNECTION_STRING)"
                         }
-                      }
+                      },
+                      "imagePullPolicy": "on-create",
+                      "restartPolicy": "always",
+                      "settings": {
+                        "image": "$(LOGIN_SERVER)/$(IMAGE_NAME):$(VERSION)"
+                      },
+                      "status": "running",
+                      "type": "docker"
+                    },
+                    "properties.desired.runtime.settings.registryCredentials.crtasegeneriotdemo": {
+                      "address": "$(LOGIN_SERVER)",
+                      "password": "$(PULL_PASSWORD)",
+                      "username": "$(PULL_USERNAME)"
                     }
                   }
                 }
@@ -29,6 +41,8 @@
             }
             EOF
           displayName: "Create IoT Edge deployment manifest"
+
+
 
         - task: AzureCLI@2
           inputs:
