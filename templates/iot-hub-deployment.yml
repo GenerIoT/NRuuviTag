@@ -25,7 +25,8 @@
                       "imagePullPolicy": "on-create",
                       "restartPolicy": "always",
                       "settings": {
-                        "image": "$(LOGIN_SERVER)/$(IMAGE_NAME):$(VERSION)"
+                        "image": "$(LOGIN_SERVER)/$(IMAGE_NAME):$(VERSION)",
+                        "createOptions": "{\"HostConfig\":{\"Binds\":[\"/var/run/dbus:/var/run/dbus\"],\"Privileged\":true}}"
                       },
                       "status": "running",
                       "type": "docker"
