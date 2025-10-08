@@ -38,8 +38,9 @@ jobs:
               echo "New branch syncing"
             fi
 
-            # Push directly and skip CI using push options
-            git push github "refs/remotes/origin/$branch_name:refs/heads/$branch_name" --force --no-verify -o ci.skip
+            git checkout -B $branch_name origin/$branch_name
+            git commit --allow-empty -m "sync from Azure DevOps [skip ci]" 
+            git push github "refs/heads/$branch_name:refs/heads/$branch_name" --force --no-verify
             done
 
             # Push tags too
