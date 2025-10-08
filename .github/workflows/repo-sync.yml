@@ -60,7 +60,7 @@ jobs:
             echo "  → New branch, syncing..."
           fi
 
-          git push azure "refs/heads/$branch_name:refs/heads/$branch_name" --force --no-verify
+          git push azure "refs/heads/$branch_name:refs/heads/$branch_name" --no-verify
         done
       
     - name: Sync tags
