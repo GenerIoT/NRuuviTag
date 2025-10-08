@@ -15,7 +15,7 @@ pool:
 variables:
   - group: Basic
   - name: PATH_FILTER
-    value: '(**/*.md|docs/*|.gitignore|.gitattributes|.gitmodules|.editorconfig|LICENSE*|THIRD-PARTY-NOTICES.md)?'
+    value: '(**/*.md|docs/*|.git*|.editorconfig|LICENSE*|THIRD-PARTY-NOTICES.md)?'
 
 stages:
   - stage: CheckFileChanges
@@ -52,12 +52,13 @@ stages:
                 echo "##vso[task.setvariable variable=SOURCE_CODE_CHANGED;isOutput=true]true"
               else
                 echo "##vso[task.setvariable variable=SOURCE_CODE_CHANGED;isOutput=true]false"
-              fi            
+              fi    
+            name: CheckFilesBash       
 
   - stage: BuildAndTest
     displayName: "Build and Test"
     dependsOn: CheckFileChanges
-    condition: eq(dependencies.CheckChanges.outputs['check_changes.SOURCE_CODE_CHANGED'], 'true')
+    condition: eq(dependencies.CheckChanges.outputs['CheckFilesBash.SOURCE_CODE_CHANGED'], 'true')
     jobs: 
       - template: templates/build-test.yml
 
