@@ -2,32 +2,12 @@ trigger:
   branches:
     include:
       - '*'  # all branches
-  paths:
-    exclude:
-      - '**/*.md'
-      - 'docs/*'
-      - '.gitignore'
-      - '.gitattributes'
-      - '.gitmodules'
-      - '.editorconfig'
-      - 'LICENSE*'
-      - 'THIRD-PARTY-NOTICES.md'
 
 pr:
   branches:
     include:
       - main
       - master
-  paths:
-    exclude:
-      - '**/*.md'
-      - 'docs/*'
-      - '.gitignore'
-      - '.gitattributes'
-      - '.gitmodules'
-      - '.editorconfig'
-      - 'LICENSE*'
-      - 'THIRD-PARTY-NOTICES.md'
 
 pool:
   vmImage: 'ubuntu-latest'
