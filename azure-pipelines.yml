@@ -58,7 +58,7 @@ stages:
 
   - stage: BuildAndTest
     displayName: "Build and Test"
-    dependsOn: CheckFileChanges
+    dependsOn: CheckFiles
     condition: eq(dependencies.CheckFiles.outputs['CheckFilesBash.SOURCE_CODE_CHANGED'], 'true')
     jobs: 
       - template: templates/build-test.yml
