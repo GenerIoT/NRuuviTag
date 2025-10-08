@@ -154,9 +154,13 @@ jobs:
         ./build.sh --target=Test --configuration=${{ env.BUILD_CONFIGURATION }}
   
   sync-to-azure-devops:
-    # Only sync if something is being pushed, not if e.g. PR created
-    if: github.event_name == 'push'
-    uses: ./.github/workflows/repo-sync.yml
     # Wait for the following jobs to be finished/skipped
     needs: [check-test-needed, build-and-test]
+    # Only sync if something is being pushed, not if e.g. PR created
+    # Make sure all needed jobs succeeded OR skipped
+    if: |
+      always() &&
+      github.event_name == 'push' &&
+      !contains(needs.*.result, 'failure')
+    uses: ./.github/workflows/repo-sync.yml
     secrets: inherit
