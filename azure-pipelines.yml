@@ -2,32 +2,12 @@ trigger:
   branches:
     include:
       - '*'  # all branches
-  paths:
-    exclude:
-      - '**/*.md'
-      - 'docs/*'
-      - '.gitignore'
-      - '.gitattributes'
-      - '.gitmodules'
-      - '.editorconfig'
-      - 'LICENSE*'
-      - 'THIRD-PARTY-NOTICES.md'
 
 pr:
   branches:
     include:
       - main
       - master
-  paths:
-    exclude:
-      - '**/*.md'
-      - 'docs/*'
-      - '.gitignore'
-      - '.gitattributes'
-      - '.gitmodules'
-      - '.editorconfig'
-      - 'LICENSE*'
-      - 'THIRD-PARTY-NOTICES.md'
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -60,7 +40,7 @@ stages:
   
   - stage: iot_hub_deployment 
     displayName: "IoT Hub Deployment"
-    dependsOn: [Container, VersionBump]
+    dependsOn: [VersionBump, Container]
     condition: and(succeeded('VersionBump'), succeeded('Container'))
     variables:
       VERSION: $[ stageDependencies.VersionBump.version_bump.outputs['SetVersion.version'] ]
@@ -72,6 +52,6 @@ stages:
     dependsOn: [BuildAndTest, VersionBump]
     # Only sync after VersionBump to also sync any newly created version commits (back) to GitHub
     # Run despite skipped jobs in dependencies
-    condition: and(not(or(failed('VersionBump'), canceled('VersionBump'))), eq(variables['Build.Reason'], 'IndividualCI'))
+    condition: and(not(or(failed(), canceled())), eq(variables['Build.Reason'], 'IndividualCI'))
     jobs:
       - template: templates/repo-sync.yml
