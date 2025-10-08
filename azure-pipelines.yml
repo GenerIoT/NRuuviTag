@@ -34,11 +34,52 @@ pool:
 
 variables:
   - group: Basic
+  - name: PATH_FILTER
+    value: |
+      **/*.md
+      docs/*
+      .gitignore
+      .gitattributes
+      .gitmodules
+      .editorconfig
+      LICENSE*
+      THIRD-PARTY-NOTICES.md
 
 stages:
+  - stage: CheckFileChanges
+    displayName: "Check if critical files are changed"
+    condition: always()
+    jobs:
+      - job: CheckFiles
+        displayName: "Check Files For Changes"
+        steps:
+          - bash: |
+              PATH_FILTER="$(PATH_FILTER)"
+              CHANGED_FILES=$(git diff HEAD HEAD~ --name-only)
+              MATCH_COUNT=0
+
+              echo "Checking for file changes..."
+              for FILE in $CHANGED_FILES
+              do
+                if [[ $FILE != *$PATH_FILTER* ]]; then
+                  echo "MATCH:  ${FILE} changed"
+                  MATCH_COUNT=$(($MATCH_COUNT+1))
+                else
+                  echo "IGNORE: ${FILE} changed"
+                fi
+              done
+
+              echo "$MATCH_COUNT match(es) for filter '$PATH_FILTER' found."
+              if [[ $MATCH_COUNT -gt 0 ]]; then
+                echo "##vso[task.setvariable variable=SOURCE_CODE_CHANGED;isOutput=true]true"
+              else
+                echo "##vso[task.setvariable variable=SOURCE_CODE_CHANGED;isOutput=true]false"
+              fi            
+
   - stage: BuildAndTest
     displayName: "Build and Test"
-    condition: always()
+    dependsOn: CheckFileChanges
+    condition: eq(dependencies.CheckChanges.outputs['check_changes.SOURCE_CODE_CHANGED'], 'true')
     jobs: 
       - template: templates/build-test.yml
 
@@ -60,7 +101,7 @@ stages:
   
   - stage: iot_hub_deployment 
     displayName: "IoT Hub Deployment"
-    dependsOn: [Container, VersionBump]
+    dependsOn: [VersionBump, Container]
     condition: and(succeeded('VersionBump'), succeeded('Container'))
     variables:
       VERSION: $[ stageDependencies.VersionBump.version_bump.outputs['SetVersion.version'] ]
@@ -69,7 +110,7 @@ stages:
 
   - stage: SyncRepo
     displayName: "Sync to GitHub"
-    dependsOn: [BuildAndTest, VersionBump]
+    dependsOn: [CheckFileChanges, VersionBump]
     # Only sync after VersionBump to also sync any newly created version commits (back) to GitHub
     # Run despite skipped jobs in dependencies
     condition: and(not(or(failed('VersionBump'), canceled('VersionBump'))), eq(variables['Build.Reason'], 'IndividualCI'))
