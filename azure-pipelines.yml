@@ -15,15 +15,7 @@ pool:
 variables:
   - group: Basic
   - name: PATH_FILTER
-    value: |
-      **/*.md
-      docs/*
-      .gitignore
-      .gitattributes
-      .gitmodules
-      .editorconfig
-      LICENSE*
-      THIRD-PARTY-NOTICES.md
+    value: '(**/*.md|docs/*|.gitignore|.gitattributes|.gitmodules|.editorconfig|LICENSE*|THIRD-PARTY-NOTICES.md)?'
 
 stages:
   - stage: CheckFileChanges
@@ -33,7 +25,13 @@ stages:
       - job: CheckFiles
         displayName: "Check Files For Changes"
         steps:
+          - checkout: self
+            fetchDepth: 3
+            fetchTags: false
+
           - bash: |
+              shopt -s extglob nullglob
+
               PATH_FILTER="$(PATH_FILTER)"
               CHANGED_FILES=$(git diff HEAD HEAD~ --name-only)
               MATCH_COUNT=0
@@ -41,7 +39,7 @@ stages:
               echo "Checking for file changes..."
               for FILE in $CHANGED_FILES
               do
-                if [[ $FILE != *$PATH_FILTER* ]]; then
+                if [[ ! $FILE =~ $PATH_FILTER ]]; then
                   echo "MATCH:  ${FILE} changed"
                   MATCH_COUNT=$(($MATCH_COUNT+1))
                 else
