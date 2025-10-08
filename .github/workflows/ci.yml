@@ -161,6 +161,7 @@ jobs:
     if: |
       always() &&
       github.event_name == 'push' &&
-      !contains(needs.*.result, 'failure')
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
     uses: ./.github/workflows/repo-sync.yml
     secrets: inherit
