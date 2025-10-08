@@ -49,7 +49,7 @@ stages:
 
   - stage: SyncRepo
     displayName: "Sync to GitHub"
-    dependsOn: [CheckFileChanges, VersionBump]
+    dependsOn: [BuildAndTest, VersionBump]
     # Only sync after VersionBump to also sync any newly created version commits (back) to GitHub
     # Run despite skipped jobs in dependencies
     condition: and(not(or(failed(), canceled())), eq(variables['Build.Reason'], 'IndividualCI'))
