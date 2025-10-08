@@ -93,6 +93,6 @@ stages:
     dependsOn: [CheckFileChanges, VersionBump]
     # Only sync after VersionBump to also sync any newly created version commits (back) to GitHub
     # Run despite skipped jobs in dependencies
-    condition: and(not(or(failed('VersionBump'), canceled('VersionBump'))), eq(variables['Build.Reason'], 'IndividualCI'))
+    condition: and(not(or(failed(), canceled())), eq(variables['Build.Reason'], 'IndividualCI'))
     jobs:
       - template: templates/repo-sync.yml
