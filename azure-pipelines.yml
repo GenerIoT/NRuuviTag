@@ -14,52 +14,11 @@ pool:
 
 variables:
   - group: Basic
-  - name: PATH_FILTER
-    value: '@(**/*.md|**/*.txt|docs/*|.git*|.editorconfig|LICENSE*|THIRD-PARTY-NOTICES.md)'
 
 stages:
-  - stage: CheckFileChanges
-    displayName: "Check if critical files are changed"
-    condition: always()
-    jobs:
-      - job: CheckFiles
-        displayName: "Check Files For Changes"
-        steps:
-          - checkout: self
-            fetchDepth: 3
-            fetchTags: false
-
-          - bash: |
-              shopt -s extglob nullglob
-
-              PATH_FILTER="$(PATH_FILTER)"
-              CHANGED_FILES=$(git diff HEAD HEAD~ --name-only)
-              MATCH_COUNT=0
-
-              echo "Checking for file changes..."
-              for FILE in $CHANGED_FILES
-              do
-                if [[ $FILE != $PATH_FILTER ]]; then
-                  echo "MATCH:  ${FILE} changed"
-                  MATCH_COUNT=$(($MATCH_COUNT+1))
-                else
-                  echo "IGNORE: ${FILE} changed"
-                fi
-              done
-
-              echo "$MATCH_COUNT match(es) found."
-
-              if [[ $MATCH_COUNT -gt 0 ]]; then
-                echo "##vso[task.setvariable variable=SOURCE_CODE_CHANGED;isOutput=true]true"
-              else
-                echo "##vso[task.setvariable variable=SOURCE_CODE_CHANGED;isOutput=true]false"
-              fi
-            name: CheckFilesBash       
-
   - stage: BuildAndTest
     displayName: "Build and Test"
-    dependsOn: CheckFiles
-    condition: eq(dependencies.CheckFiles.outputs['CheckFilesBash.SOURCE_CODE_CHANGED'], 'true')
+    condition: always()
     jobs: 
       - template: templates/build-test.yml
 
