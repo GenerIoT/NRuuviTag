@@ -2,7 +2,7 @@ jobs:
   - job: CheckFiles
     variables:
       - group: Basic
-    displayName: "Check Files For Changes"
+    displayName: "Check Files Against Exclusion Filter"
     steps:
       - checkout: self
         fetchDepth: 3
