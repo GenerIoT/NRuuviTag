@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+# test comment
+
 set -euox pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
