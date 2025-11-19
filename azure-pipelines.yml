@@ -25,14 +25,14 @@ stages:
   - stage: VersionBump
     displayName: "Version Bump"
     dependsOn: BuildAndTest
-    condition: and(succeeded('BuildAndTest'), eq(variables['Build.SourceBranch'], format('refs/heads/{0}', variables['TARGET_BRANCH'])), eq(variables['Build.Reason'], 'IndividualCI'))
+    condition: and(succeeded('BuildAndTest'), eq(variables['Build.SourceBranch'], format('refs/heads/{0}', variables['TARGET_BRANCH'])), or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'Manual')))
     jobs:
       - template: templates/version-bump.yml
 
   - stage: Container
     displayName: "Build and Push Container"
     dependsOn: VersionBump
-    condition: and(succeeded('VersionBump'),eq(variables['Build.SourceBranch'], format('refs/heads/{0}', variables['TARGET_BRANCH'])), eq(variables['Build.Reason'], 'IndividualCI'))
+    condition: and(succeeded('VersionBump'),eq(variables['Build.SourceBranch'], format('refs/heads/{0}', variables['TARGET_BRANCH'])), or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'Manual')))
     variables:
       VERSION: $[ stageDependencies.VersionBump.version_bump.outputs['SetVersion.version'] ]
     jobs:
@@ -52,6 +52,6 @@ stages:
     dependsOn: [BuildAndTest, VersionBump]
     # Only sync after VersionBump to also sync any newly created version commits (back) to GitHub
     # Run despite skipped jobs in dependencies
-    condition: and(not(or(failed(), canceled())), eq(variables['Build.Reason'], 'IndividualCI'))
+    condition: and(not(or(failed(), canceled())), or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'Manual')))
     jobs:
       - template: templates/repo-sync.yml
