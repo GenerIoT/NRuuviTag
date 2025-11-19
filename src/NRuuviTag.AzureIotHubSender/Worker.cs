@@ -31,7 +31,7 @@ namespace LinuxSdkClient {
             //string DeviceConnectionString = Environment.GetEnvironmentVariable("ConnectionString") ?? throw new ArgumentNullException("FATAL: Could not retrieve env-var: ConnectionString");
 
             // Create an instance of the device client using the connection string
-            ModuleClient deviceClient = ModuleClient.CreateFromEnvironmentAsync(TransportType.Mqtt);
+            ModuleClient deviceClient = await ModuleClient.CreateFromEnvironmentAsync(TransportType.Mqtt);
             
             // Connect to the device client
             await deviceClient.OpenAsync();
