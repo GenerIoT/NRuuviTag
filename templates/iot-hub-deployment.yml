@@ -19,7 +19,6 @@
                     "properties.desired.modules.$(MODULE_NAME)": {
                       "imagePullPolicy": "on-create",
                       "restartPolicy": "always",
-                      "startupOrder": 100,
                       "settings": {
                         "image": "$(LOGIN_SERVER)/$(IMAGE_NAME):$(VERSION)",
                         "createOptions": "{\"HostConfig\":{\"Binds\":[\"/var/run/dbus:/var/run/dbus\"],\"Privileged\":true}}"
@@ -64,3 +63,4 @@
                 --labels '{"tag":"'$VERSION'", "cicd":"true", "source":"azure-devops"}'
 
             displayName: "Deploy IoT Edge module"
+
