@@ -26,19 +26,19 @@ namespace LinuxSdkClient {
             _logger = logger;
         }
 
-        private static async Task<DeviceClient> ConnectToAzure() {
+        private static async Task<ModuleClient> ConnectToAzure() {
             // Fetch the connection string from an environment variable
-            string DeviceConnectionString = Environment.GetEnvironmentVariable("ConnectionString") ?? throw new ArgumentNullException("FATAL: Could not retrieve env-var: ConnectionString");
+            //string DeviceConnectionString = Environment.GetEnvironmentVariable("ConnectionString") ?? throw new ArgumentNullException("FATAL: Could not retrieve env-var: ConnectionString");
 
             // Create an instance of the device client using the connection string
-            DeviceClient deviceClient = DeviceClient.CreateFromConnectionString(DeviceConnectionString, TransportType.Mqtt);
+            ModuleClient deviceClient = ModuleClient.CreateFromEnvironmentAsync(TransportType.Mqtt);
             
             // Connect to the device client
             await deviceClient.OpenAsync();
             return deviceClient;
         }
 
-        private async Task SendToAzureAsync(DeviceClient deviceClient, RuuviTagSample data) {
+        private async Task SendToAzureAsync(ModuleClient deviceClient, RuuviTagSample data) {
             var payload = JsonConvert.SerializeObject(data);
             Console.WriteLine(payload);
 
@@ -66,7 +66,7 @@ namespace LinuxSdkClient {
             }
         }
 
-        private async Task UpdateEndDeviceAsync(DeviceClient deviceClient, RuuviTagSample sample, CancellationToken ct) {
+        private async Task UpdateEndDeviceAsync(ModuleClient deviceClient, RuuviTagSample sample, CancellationToken ct) {
             var twin = await deviceClient.GetTwinAsync(ct);
             
             // Get the current endDevices array
@@ -124,7 +124,7 @@ namespace LinuxSdkClient {
             var excs = new List<DateTime>();
             while (true) {
                 try {
-                    DeviceClient deviceClient = await ConnectToAzure();
+                    ModuleClient deviceClient = await ConnectToAzure();
                     IRuuviTagListener client = new BlueZListener("hci0");
 
                     // TODO: update dynamically in bg (start callback func in bg?)
