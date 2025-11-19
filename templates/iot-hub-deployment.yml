@@ -17,11 +17,6 @@
                 "modulesContent": {
                   "\$edgeAgent": {
                     "properties.desired.modules.$(MODULE_NAME)": {
-                      "env": {
-                        "ConnectionString": {
-                          "value": "$(DEVICE_CONNECTION_STRING)"
-                        }
-                      },
                       "imagePullPolicy": "on-create",
                       "restartPolicy": "always",
                       "startupOrder": 100,
@@ -67,4 +62,5 @@
                 --target-condition "$(TARGET_CONDITION)" \
                 --priority $PRIORITY \
                 --labels '{"tag":"'$VERSION'", "cicd":"true", "source":"azure-devops"}'
+
             displayName: "Deploy IoT Edge module"
