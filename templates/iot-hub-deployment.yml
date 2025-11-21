@@ -32,6 +32,11 @@
                       "username": "$(PULL_USERNAME)"
                     }
                   }
+                  "\$edgeHub": {
+                    "properties.desired.routes.telemetry": {
+                      "route": "FROM */ INTO \$upstream"
+                    }
+                  }
                 }
               }
             }
@@ -63,4 +68,5 @@
                 --labels '{"tag":"'$VERSION'", "cicd":"true", "source":"azure-devops"}'
 
             displayName: "Deploy IoT Edge module"
+
 
