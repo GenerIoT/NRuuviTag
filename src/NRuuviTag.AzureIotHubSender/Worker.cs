@@ -150,25 +150,25 @@ namespace LinuxSdkClient {
                         // }
                         
                         // Skip any samples older than 3 min
-                        if (sample.Timestamp < DateTime.UtcNow.AddMinutes(-3)) {
-                            continue;
-                        }
+//                        if (sample.Timestamp < DateTime.UtcNow.AddMinutes(-3)) {
+  //                          continue;
+    //                    }
     
                         // If measurement from this mac during this round not yet sent
                         // Send to Azure in the background
                         // POTENTIAL BUG: IF 2+ SAMPLES IN MAC ORDER, SAMPLES ARE SKIPPED
                         // TODO: change limiter behaviour, collect asynclist in the bg, another sync loop fetching all collected values every 5min delay and process 
-                        if (sample.MacAddress != null && !macs.Contains(sample.MacAddress)) {
+//                        if (sample.MacAddress != null && !macs.Contains(sample.MacAddress)) {
                             _ = SendToAzureAsync(deviceClient, sample);
                             _ = UpdateEndDeviceAsync(deviceClient, sample, stoppingToken);
-                            macs.Add(sample.MacAddress);
-                            continue;
-                        }
+      //                      macs.Add(sample.MacAddress);
+        //                    continue;
+          //              }
     
                         // Start over after sleep
-                        macs.Clear();
+//                        macs.Clear();
                         // Sleep 5m (* 60s * 1000ms)
-                        await Task.Delay(5*60*1000);
+//                        await Task.Delay(5*60*1000);
                     }
                 }
                 catch (OperationCanceledException ec) {
